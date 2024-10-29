@@ -1,58 +1,54 @@
-# EduConsultPro - Salesforce CRM Setup
+# Student Admission Application Screen Flow
 
-This document outlines the setup process for the EduConsultPro Salesforce CRM solution.
+This document details the structure and components of the Student Admission Application Screen Flow.
 
-## Object Creation
+## Flow Overview
 
-### Importing Objects from Spreadsheets
+The flow automates the student admission process, collecting student information, allowing course selection, creating necessary records, and sending a confirmation email.
 
-* **Course Object:**  A custom object named "Course" was created using the data provided in the 'Course' spreadsheet. Spreadsheet columns were mapped to corresponding Salesforce fields in the `Course` object.
+## Flow Components
 
-* **Remaining Objects:**  Similar to the `Course` object, custom objects were created for `Consultant`, `Student`, `Appointment`, and `Registration` using their respective spreadsheets.  Careful field mapping ensured data integrity during the import process.
+1. **Screen Element (Student Info):**
+    * Collects student information using fields from the `Student` object.
+    * Utilizes a record variable resource: `StudentRecordRes`.
 
-### Establishing Object Relationships
+2. **Create Records Element (Create Student Record):**
+    * Creates a new `Student` record using the data collected from the "Student Info" screen.
+    * Stores the newly created record in the `StudentRecordRes` variable.
 
-Lookup relationships were established to connect related data:
+3. **Screen Element (Course Screen):**
+    * Presents a picklist for course selection (IELTS, GRE, GMAT, Duolingo, TOEFL).
+    * Uses choice variables for each course option (e.g., `SelectedIELTS`, `SelectedGRE`, etc.).
 
-* **Appointment Object:**
-    * `Appointment` → `Student` (Student lookup field)
-    * `Appointment` → `Consultant` (Consultant lookup field)
+4. **Decision Element (Selecting Course):**
+    * Evaluates the selected course from the "Course Screen."
+    * Routes the flow based on the selected course.
+    * Defines outcomes for each course option (e.g., "Selected IELTS," "Selected GRE," etc.).
 
-* **Registration Object:**
-    * A custom object, `Registration`, was created to store student and course details.
-    * `Registration` → `Student` (Student lookup field)
-    * `Registration` → `Course` (Course lookup field)
+5. **Get Records Element (Retrieve Course Record):**
+    * For each course outcome (e.g., "Selected IELTS"), a Get Records element retrieves the corresponding `Course` record based on the selected course name.
 
-* **Student and Case:**
-    * `Student` → `Case` (Case lookup field)
+6. **Create Records Element (Create Registration Record):**
+    * For each course outcome path, this element creates a `Registration` record.
+    * Links the newly created `Student` record (from `StudentRecordRes`) and the retrieved `Course` record.
 
-
-## Case Object Configuration
-
-The standard `Case` object was configured with custom picklist values:
-
-* **Type Field:**
-    * `Immigration`
-    * `Visa Application`
-
-* **Status Field:**
-    * `Open`
-    * `In-Progress`
-    * `Closed` (recommended for completeness)
+7. **Text Template Resources (Email Templates):**
+    * Two text template resources are created:
+        * `StuRegistrationEmailTextTempBody`:  Contains the email body content.
+        * `StuRegistrationEmailTextTempSub`: Contains the email subject.
 
 
+8. **Action Element (Send Email to Student):**
+    * Sends a registration confirmation email to the student using an Email Alert action.
+    * Utilizes the email templates: `StuRegistrationEmailTextTempBody` and `StuRegistrationEmailTextTempSub`.
 
-## Lightning App Creation
-
-A Lightning App named "EduConsultPro" was created to centralize access to all functionalities.  The app includes the following tabs:
-
-* Home
-* Students
-* Courses
-* Consultants
-* Appointments
-* Registrations
-* Cases
+9. **Screen Element (Success Screen):**
+    * Displays a success message to the student upon completion of the flow.
 
 
-The `EduConsultPro` app is accessible to users with the System Administrator profile.
+## Flow Logic
+
+The flow follows a linear path until the "Selecting Course" decision element. From there, it branches based on the selected course, retrieving the appropriate course record and creating the corresponding registration.  Finally, a confirmation email is sent, and a success message is displayed.
+
+
+This structured approach ensures a smooth and efficient student admission application process.

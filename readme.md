@@ -1,19 +1,30 @@
-# User Creation and Configuration
+# Appointment Approval Process
 
-This document outlines the process of creating a new user and configuring their settings within Salesforce.
+This document details the configuration of the approval process for the `Appointment` object.
 
-## User Creation
+## Email Templates
 
-A new user was created with the following characteristics:
+Before configuring the approval process, email templates were created for the following stages:
 
-* **Profile:** Standard Platform User
-    * This profile provides the necessary access for standard Salesforce functionality.
-
-## User Settings Configuration
-
-After user creation, the following settings were configured:
-
-* **Manager Assignment:**  The new user was assigned a manager within their user settings. This is a crucial step for enabling the approval process, as approvals are typically routed to the user's manager.  This ensures proper oversight and control within the system.
+* **Submission:**  This email notifies the submitter and the approver that the appointment request has been submitted.
+* **Approval:** This email notifies the submitter that the appointment has been approved.
+* **Rejection:** This email notifies the submitter that the appointment has been rejected.  It may also include the reason for rejection.
 
 
-By assigning a manager, the user is integrated into the organizational hierarchy, allowing for streamlined workflows and efficient approval processes.
+## Approval Process Configuration
+
+The approval process for the `Appointment` object was configured with the following settings:
+
+* **Approver:** The manager of the user submitting the appointment request is designated as the approver. This leverages the user hierarchy within Salesforce.
+
+* **Record Editability:**
+    * **During Approval Process:** Record editability is restricted.  Only administrators and the assigned approver can edit the `Appointment` record during the approval process. This maintains data integrity and prevents unauthorized modifications.
+
+* **Approval Actions:** The following actions are configured for different stages of the approval process:
+
+    * **Initial Submission Actions:**  Update the `Appointment` record status (e.g., to "Pending Approval") and send the "Submission" email notification.
+    * **Final Approval Actions:** Update the `Appointment` record status (e.g., to "Approved") and send the "Approval" email notification.
+    * **Final Rejection Actions:** Update the `Appointment` record status (e.g., to "Rejected") and send the "Rejection" email notification.
+
+
+This configuration ensures a structured and controlled approval process for appointments, with clear communication at each stage.  The use of email templates keeps all parties informed and provides a record of the approval history.

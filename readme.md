@@ -1,29 +1,36 @@
-# Appointment Record-Triggered Flow
+# Salesforce Triggers Documentation
 
-This document describes the configuration of a record-triggered flow that automates the appointment submission process.
+## Trigger 1: Automatically Create a Follow-Up Case After One Month
 
-## Flow Trigger
+**Trigger Name:** `StudentTrigger`
 
-The flow is configured as a record-triggered flow with the following trigger settings:
+**Trigger Event:** `after update`
 
-* **Object:** `Appointment`
-* **Trigger Event:**  A record is created.
-* **Entry Conditions:**  No specific entry conditions are defined, meaning the flow runs every time a new `Appointment` record is created.
+**Description:**
+This trigger automatically creates a follow-up case for students who have been enrolled for a month. The case is created to ensure continuous support and engagement with students after one month in the program.
 
+**Trigger Logic:**
+1. Check if the student's `Enrollment_Date__c` was one month ago and if `Last_Follow_Up__c` is `null`.
+2. If both conditions are met, create a high-priority case with:
+   - Subject: `One Month Follow-up`
+   - Description: A message to ensure ongoing support after one month of enrollment.
+3. Add cases to a list and insert them in bulk to minimize DML operations.
+4. Implement error handling to alert if case creation fails.
+## Trigger 2: Send Email Reminder for Upcoming Appointments 24 Hours in Advance
 
-## Flow Components
+**Trigger Name:** `AppointmentReminderTrigger`
 
-The flow consists of the following components:
+**Trigger Event:** `before update`
 
-1. **Start Element:** Configured to trigger when an `Appointment` record is created.
+**Purpose:**  
+This trigger is designed to send automated reminder emails to both students and consultants 24 hours before a scheduled appointment. It helps ensure that both parties are reminded of their upcoming appointments, reducing the likelihood of missed sessions.
 
-2. **Action Element (Submit for Approval):**
-    * This action element utilizes the "Submit for Approval" core action.
-    * It automatically submits the newly created `Appointment` record for approval.
-    * This action integrates with the previously configured approval process, routing the request to the assigned approver (the submitting user's manager).
-
-
-
-## Flow Logic
-
-The flow's logic is straightforward: whenever a new `Appointment` record is created, the flow triggers and immediately submits the record for approval. This automation streamlines the appointment scheduling process and eliminates the need for manual submission.
+### Trigger Workflow:
+1. **Calculate Time Difference**: The trigger calculates the time difference between the current date and time and the scheduled appointment time (`Appointment_Date__c` and `Appointment_Time__c` fields).
+2. **Check Reminder Criteria**: 
+   - If the appointment is exactly 24 hours away.
+   - If the `Reminder_Sent__c` field is set to `false` (to avoid sending duplicate reminders).
+3. **Send Reminder Emails**: 
+   - Retrieve email addresses for both the student and consultant.
+   - Create a reminder email for each party with appointment details.
+4. **Update Appointment Record**: Set `Reminder_Sent__c` to `true` after the email is sent to avoid duplicate reminders in future trigger executions.

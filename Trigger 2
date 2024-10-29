@@ -1,0 +1,62 @@
+// Trigger 2: Send email reminder for upcoming appointments 24 hours before the scheduled time
+trigger AppointmentReminderTrigger on Appointment__c (before update) {
+    if (Trigger.isBefore) {
+        List<Messaging.SingleEmailMessage> emailsToSend = new List<Messaging.SingleEmailMessage>();
+        
+        for (Appointment__c appt : Trigger.new) {
+            // Check if the appointment is exactly 24 hours from now and Reminder_Sent__c is false
+            DateTime currentDateTime = DateTime.now();
+            DateTime apptDateTime = DateTime.newInstance(appt.Appointment_Date__c, appt.Appointment_Time__c);
+            Integer hoursUntilAppointment = currentDateTime.hoursBetween(apptDateTime);
+
+            if (hoursUntilAppointment == 24 && !appt.Reminder_Sent__c) {
+                // Query for related records to get email addresses
+                Appointment__c apptWithRelations = [
+                    SELECT Id, Student__r.Email__c, Consultant__r.Email__c,
+                           Appointment_Date__c, Appointment_Time__c
+                    FROM Appointment__c 
+                    WHERE Id = :appt.Id
+                ];
+                
+                // Create email for student
+                if (apptWithRelations.Student__r.Email__c != null) {
+                    Messaging.SingleEmailMessage studentEmail = new Messaging.SingleEmailMessage();
+                    studentEmail.setToAddresses(new List<String>{apptWithRelations.Student__r.Email__c});
+                    studentEmail.setSubject('Appointment Reminder');
+                    studentEmail.setPlainTextBody(
+                        'This is a reminder for your appointment scheduled on ' + 
+                        apptWithRelations.Appointment_Date__c.format() + ' at ' + 
+                        apptWithRelations.Appointment_Time__c.format() + '. Please ensure you are prepared.'
+                    );
+                    emailsToSend.add(studentEmail);
+                }
+                
+                // Create email for consultant
+                if (apptWithRelations.Consultant__r.Email__c != null) {
+                    Messaging.SingleEmailMessage consultantEmail = new Messaging.SingleEmailMessage();
+                    consultantEmail.setToAddresses(new List<String>{apptWithRelations.Consultant__r.Email__c});
+                    consultantEmail.setSubject('Appointment Reminder');
+                    consultantEmail.setPlainTextBody(
+                        'This is a reminder for your upcoming appointment on ' + 
+                        apptWithRelations.Appointment_Date__c.format() + ' at ' + 
+                        apptWithRelations.Appointment_Time__c.format() + '.'
+                    );
+                    emailsToSend.add(consultantEmail);
+                }
+
+                // Mark the reminder as sent
+                appt.Reminder_Sent__c = true;
+            }
+        }
+        
+        // Send emails
+        if (!emailsToSend.isEmpty()) {
+            try {
+                Messaging.sendEmail(emailsToSend);
+            } catch (Exception e) {
+                System.debug('Error sending appointment reminder emails: ' + e.getMessage());
+            }
+        }
+    }
+}
+

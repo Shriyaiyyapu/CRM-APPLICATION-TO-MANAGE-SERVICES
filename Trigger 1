@@ -1,0 +1,37 @@
+// Trigger 1: Automatically create a follow-up case after a student has been with the program for a month
+trigger StudentTrigger on Student__c (after update) {
+    List<Case> casesToInsert = new List<Case>();
+
+    for(Student__c student : Trigger.new) {
+        // Check if the student has been with the program for a month
+        // Assuming Last_Follow_Up__c is a custom Date field that tracks the last follow-up date
+        if (student.Enrollment_Date__c != null && 
+            student.Enrollment_Date__c.addMonths(1) <= Date.today() && 
+            student.Last_Follow_Up__c == null) {
+            
+            // Create a follow-up case for each student meeting criteria
+            Case followUpCase = new Case(
+                Subject = 'One Month Follow-up',
+                Description = 'This case has been created to ensure continuous support after one month of enrollment.',
+                Status = 'Open',
+                Origin = 'Student Follow-up',
+                Priority = 'High',
+                ContactEmail = student.Email__c,
+                Student__c = student.Id  // Assuming there's a lookup field on Case to Student__c
+            );
+            casesToInsert.add(followUpCase);
+        }
+    }
+
+    if (!casesToInsert.isEmpty()) {
+        try {
+            insert casesToInsert;
+        } catch (DMLException e) {
+            // Add error handling
+            for (Student__c student : Trigger.new) {
+                student.addError('Unable to create follow-up case: ' + e.getMessage());
+            }
+        }
+    }
+}
+
